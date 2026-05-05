@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Status de Cartera – Juan Cruz Anton Aguilar – Balanz</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --navy:#0A1628;--navy2:#112240;--blue:#1B4F8A;--accent:#2B7FE0;
+  --cyan:#38BDF8;--gold:#C9A84C;--white:#FFFFFF;--off-white:#F8F9FC;
+  --surface:#F2F5FA;--gray:#64748B;--gray-lt:#CBD5E1;--text:#0F172A;
+  --green:#22C55E;--green-lt:#DCFCE7;--green-dk:#166534;
+  --red:#EF4444;--red-lt:#FEE2E2;--red-dk:#991B1B;
+  --sidebar-w:230px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--off-white);color:var(--text);font-size:13.5px;}
+.sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--navy);display:flex;flex-direction:column;z-index:200;overflow-y:auto;overflow-x:hidden;transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);}
+.sidebar.collapsed{transform:translateX(-100%);}
+.sidebar::-webkit-scrollbar{width:3px;}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);}
+.sidebar::before{content:'';position:absolute;bottom:0;right:0;width:160px;height:160px;background:radial-gradient(circle,rgba(43,127,224,0.18) 0%,transparent 70%);pointer-events:none;}
+.sb-logo{padding:28px 26px 24px;border-bottom:1px solid rgba(255,255,255,0.07);}
+.sb-brand{font-family:'Inter',sans-serif;font-size:22px;font-weight:700;color:var(--white);letter-spacing:4px;text-transform:uppercase;}
+.sb-sub{font-size:9px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--cyan);margin-top:3px;opacity:0.7;}
+.sb-client{padding:18px 26px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:8px;}
+.sb-client-label{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:5px;}
+.sb-client-name{font-size:13px;font-weight:500;color:rgba(255,255,255,0.85);line-height:1.4;}
+.sb-client-meta{font-size:11px;color:var(--cyan);margin-top:3px;opacity:0.8;}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 26px;color:rgba(255,255,255,0.4);font-size:12px;font-weight:400;cursor:pointer;transition:all 0.2s;border-left:2px solid transparent;text-decoration:none;}
+.nav-item:hover{color:rgba(255,255,255,0.75);background:rgba(255,255,255,0.04);}
+.nav-item.active{color:var(--white);background:rgba(43,127,224,0.12);border-left-color:var(--cyan);font-weight:500;}
+.nav-icon{font-size:13px;width:16px;text-align:center;flex-shrink:0;}
+.nav-section-label{padding:16px 26px 6px;font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.2);}
+.nav-group-header{display:flex;align-items:center;gap:11px;padding:10px 26px;color:rgba(255,255,255,0.6);font-size:12px;font-weight:500;cursor:pointer;transition:all 0.2s;border-left:2px solid transparent;}
+.nav-group-header:hover{color:var(--white);background:rgba(255,255,255,0.04);}
+.nav-group-header.open{color:var(--white);border-left-color:var(--cyan);background:rgba(43,127,224,0.08);}
+.nav-arrow{margin-left:auto;font-size:10px;transition:transform 0.25s;color:rgba(255,255,255,0.3);}
+.nav-group-header.open .nav-arrow{transform:rotate(90deg);color:var(--cyan);}
+.nav-group{max-height:0;overflow:hidden;transition:max-height 0.35s ease;}
+.nav-group.open{max-height:500px;}
+.nav-sub-item{display:flex;align-items:center;padding:7px 26px 7px 44px;color:rgba(255,255,255,0.3);font-size:11.5px;cursor:pointer;transition:all 0.2s;border-left:2px solid transparent;text-decoration:none;}
+.nav-sub-item:hover{color:rgba(255,255,255,0.65);background:rgba(255,255,255,0.03);}
+.nav-sub-item.active{color:var(--cyan);border-left-color:var(--cyan);}
+.sb-footer{margin-top:auto;padding:16px 26px;font-size:10px;color:rgba(255,255,255,0.2);line-height:1.7;border-top:1px solid rgba(255,255,255,0.07);}
+.toggle-btn{position:fixed;top:18px;left:calc(var(--sidebar-w) + 12px);z-index:300;width:34px;height:34px;background:var(--navy);border:none;border-radius:8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:left 0.3s cubic-bezier(0.4,0,0.2,1),background 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.25);padding:0;}
+.toggle-btn:hover{background:var(--blue);}
+.toggle-btn span{display:block;width:16px;height:2px;background:rgba(255,255,255,0.7);border-radius:2px;transition:all 0.3s;}
+.toggle-btn.collapsed{left:12px;}
+.toggle-btn.collapsed span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.toggle-btn.collapsed span:nth-child(2){opacity:0;}
+.toggle-btn.collapsed span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+.main{margin-left:var(--sidebar-w);min-height:100vh;transition:margin-left 0.3s cubic-bezier(0.4,0,0.2,1);}
+.main.expanded{margin-left:0;}
+.section{display:none;animation:fadeUp 0.3s ease;}
+.section.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+#s-portada{min-height:100vh;background:var(--navy);display:none;flex-direction:column;position:relative;overflow:hidden;}
+#s-portada.active{display:flex;}
+.portada-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 90% 10%,rgba(56,189,248,0.08) 0%,transparent 50%),radial-gradient(ellipse at 10% 90%,rgba(43,127,224,0.1) 0%,transparent 50%);}
+.portada-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);background-size:60px 60px;}
+.portada-top{padding:44px 60px 0;position:relative;z-index:2;display:flex;justify-content:space-between;}
+.portada-date{font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.35);}
+.portada-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 60px;position:relative;z-index:2;}
+.portada-eyebrow{font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--cyan);margin-bottom:20px;opacity:0.8;}
+.portada-title{font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:600;color:var(--white);line-height:1.05;margin-bottom:12px;}
+.portada-title em{font-style:italic;color:var(--gold);}
+.portada-subtitle{font-size:16px;font-weight:300;color:rgba(255,255,255,0.5);margin-bottom:32px;}
+.portada-divider{width:60px;height:1px;background:var(--gold);margin-bottom:40px;opacity:0.6;}
+.portada-kpis{display:flex;gap:0;flex-wrap:wrap;}
+.portada-kpi{padding:20px 36px 20px 0;border-right:1px solid rgba(255,255,255,0.1);margin-right:36px;}
+.portada-kpi:last-child{border-right:none;}
+.portada-kpi-label{font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:8px;}
+.portada-kpi-value{font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:600;color:var(--white);line-height:1;}
+.portada-kpi-value span{font-size:14px;color:var(--cyan);font-weight:400;}
+.portada-kpi-sub{font-size:11px;color:rgba(255,255,255,0.3);margin-top:4px;}
+.portada-bottom{padding:28px 60px;position:relative;z-index:2;display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,0.06);}
+.portada-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:6px 14px;font-size:11px;color:rgba(255,255,255,0.55);font-weight:500;}
+.portada-tag b{color:rgba(255,255,255,0.85);}
+.page{padding:40px 44px;}
+.page-header{margin-bottom:28px;padding-bottom:16px;border-bottom:2px solid var(--surface);}
+.page-header h2{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600;color:var(--navy);}
+.page-header p{font-size:13px;color:var(--gray);margin-top:6px;line-height:1.6;max-width:780px;}
+.stat-row{display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap;}
+.stat-tile{flex:1;min-width:130px;background:var(--white);border-radius:14px;padding:18px 20px;border:1px solid var(--gray-lt);position:relative;overflow:hidden;}
+.stat-tile::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 14px 14px;background:var(--accent);}
+.stat-tile.gold::after{background:var(--gold);}
+.stat-tile.green::after{background:var(--green);}
+.stat-tile.cyan::after{background:var(--cyan);}
+.stat-tile.red::after{background:var(--red);}
+.st-label{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin-bottom:8px;}
+.st-val{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--navy);line-height:1;}
+.st-sub{font-size:11px;color:var(--gray);margin-top:5px;}
+.card{background:var(--white);border-radius:16px;border:1px solid var(--gray-lt);padding:24px;margin-bottom:20px;}
+.card-title{font-size:11px;font-weight:700;color:var(--navy);margin-bottom:18px;text-transform:uppercase;letter-spacing:1.2px;display:flex;align-items:center;gap:8px;}
+.card-title::before{content:'';width:3px;height:14px;background:var(--cyan);border-radius:2px;flex-shrink:0;}
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+.tbl thead th{background:var(--navy);color:rgba(255,255,255,0.7);padding:9px 12px;text-align:left;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;}
+.tbl thead th:first-child{border-radius:8px 0 0 0;}
+.tbl thead th:last-child{border-radius:0 8px 0 0;}
+.tbl tbody tr{border-bottom:1px solid var(--surface);transition:background 0.15s;}
+.tbl tbody tr:hover{background:#F0F5FF;}
+.tbl tbody td{padding:9px 12px;vertical-align:middle;}
+.tbl tfoot td{padding:10px 12px;font-weight:700;font-size:13px;background:var(--surface);color:var(--navy);border-top:2px solid var(--gray-lt);}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.b-blue{background:#DBEAFE;color:#1E40AF;}
+.b-gold{background:#FEF3C7;color:#92400E;}
+.b-gray{background:#F1F5F9;color:#475569;}
+.b-green{background:var(--green-lt);color:var(--green-dk);}
+.b-purple{background:#EDE9FE;color:#5B21B6;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.pill-pos{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:var(--green-lt);color:var(--green-dk);}
+.pill-neg{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:var(--red-lt);color:var(--red-dk);}
+.callout{background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);border-radius:14px;padding:20px 24px;color:var(--white);display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px;}
+.cl-item{text-align:center;}
+.cl-item .cl{font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:4px;}
+.cl-item .cv{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--white);line-height:1;}
+.cl-item .cv.pos{color:#4ADE80;}
+.cl-item .cv.neg{color:#F87171;}
+.cl-item .cs{font-size:10px;color:rgba(255,255,255,0.35);margin-top:3px;}
+.cl-sep{width:1px;height:36px;background:rgba(255,255,255,0.1);flex-shrink:0;}
+.sem{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;}
+.sem-g{background:var(--green-lt);color:var(--green-dk);}
+.sem-r{background:var(--red-lt);color:var(--red-dk);}
+.nota-box{background:var(--surface);border-radius:10px;padding:12px 16px;font-size:11.5px;color:var(--gray);line-height:1.6;margin-top:12px;}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD -->
+<div id="pwd-screen" style="position:fixed;inset:0;background:var(--navy);z-index:9999;display:flex;align-items:center;justify-content:center;">
+  <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);background-size:60px 60px;pointer-events:none"></div>
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 60% 40%,rgba(56,189,248,0.07) 0%,transparent 55%);pointer-events:none"></div>
+  <div style="position:relative;z-index:2;text-align:center">
+    <div style="font-family:'Inter',sans-serif;font-size:20px;font-weight:700;color:var(--white);letter-spacing:5px;text-transform:uppercase;margin-bottom:6px">BALANZ</div>
+    <div style="font-size:9px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--cyan);opacity:0.7;margin-bottom:48px">Full Investment House</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:rgba(255,255,255,0.35);margin-bottom:32px">Ingresá tu contraseña para continuar</div>
+    <div style="display:flex;gap:12px;align-items:center;justify-content:center">
+      <input id="pwd-input" type="password" placeholder="Contraseña"
+        style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:12px 20px;color:var(--white);font-family:'Inter',sans-serif;font-size:14px;width:220px;outline:none;letter-spacing:2px"
+        onkeydown="if(event.key==='Enter')checkPwd()">
+      <button onclick="checkPwd()" style="background:var(--accent);border:none;border-radius:10px;padding:12px 24px;color:var(--white);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;" onmouseover="this.style.background='#1B4F8A'" onmouseout="this.style.background='var(--accent)'">Ingresar</button>
+    </div>
+    <div id="pwd-error" style="margin-top:14px;font-size:12px;color:#F87171;opacity:0;transition:opacity 0.3s">Contraseña incorrecta</div>
+  </div>
+</div>
+
+<button class="toggle-btn" id="toggleBtn" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sb-logo"><div class="sb-brand">BALANZ</div><div class="sb-sub">Full Investment House</div></div>
+  <div class="sb-client">
+    <div class="sb-client-label">Cliente</div>
+    <div class="sb-client-name">Juan Cruz Anton Aguilar</div>
+    <div class="sb-client-meta">Comitente 361638 · USD 6.068</div>
+  </div>
+  <div class="nav-section-label">General</div>
+  <a class="nav-item active" onclick="show('s-portada',this)"><span class="nav-icon">◆</span> Portada</a>
+  <div class="nav-group-header" onclick="toggleGroup('g-status')">
+    <span class="nav-icon">📊</span> Status de Cartera
+    <span class="nav-arrow">▸</span>
+  </div>
+  <div class="nav-group" id="g-status">
+    <a class="nav-sub-item" onclick="show('s-resumen',this)">↳ Mayo 2026</a>
+  </div>
+  <div class="sb-footer">
+    <div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.18);margin-bottom:6px">Financial Advisor</div>
+    <div style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.45);margin-bottom:10px">Roberto Avcharian</div>
+    @Balanzcapital<br>www.balanz.com<br>05 de Mayo 2026
+  </div>
+</nav>
+
+<div class="main">
+
+  <!-- PORTADA -->
+  <section class="section active" id="s-portada">
+    <div class="portada-bg"></div>
+    <div class="portada-grid"></div>
+    <div class="portada-top">
+      <div class="portada-date">05 de Mayo 2026</div>
+      <div style="font-family:'Inter',sans-serif;font-size:13px;font-weight:700;color:rgba(255,255,255,0.2);letter-spacing:4px">BALANZ</div>
+    </div>
+    <div class="portada-body">
+      <div class="portada-eyebrow">Status de Cartera · Balanz Capital</div>
+      <h1 class="portada-title">Juan Cruz<br><em>Anton Aguilar</em></h1>
+      <div class="portada-subtitle">Comitente 361638 · Corte 05/05/2026</div>
+      <div class="portada-divider"></div>
+      <div class="portada-kpis">
+        <div class="portada-kpi">
+          <div class="portada-kpi-label">Total Cartera</div>
+          <div class="portada-kpi-value">5.285<span> USD</span></div>
+          <div class="portada-kpi-sub">sin BCAHA · todo en USD</div>
+        </div>
+        <div class="portada-kpi">
+          <div class="portada-kpi-label">P&L Neto USD</div>
+          <div class="portada-kpi-value" style="color:#4ADE80">+112<span> USD</span></div>
+          <div class="portada-kpi-sub">+2,2% sobre capital</div>
+        </div>
+        <div class="portada-kpi">
+          <div class="portada-kpi-label">TNA cartera</div>
+          <div class="portada-kpi-value" style="color:#4ADE80">+4,9<span>%</span></div>
+          <div class="portada-kpi-sub">anualizado en USD</div>
+        </div>
+        <div class="portada-kpi">
+          <div class="portada-kpi-label">Días de tenencia</div>
+          <div class="portada-kpi-value">161<span> días</span></div>
+          <div class="portada-kpi-sub">desde 25/11/2025</div>
+        </div>
+      </div>
+    </div>
+    <div class="portada-bottom">
+      <div class="portada-tag"><b>Acciones ARG:</b> GGAL · PAMP · TGSU2</div>
+      <div class="portada-tag"><b>CEDEARs:</b> 15 posiciones</div>
+      <div class="portada-tag"><b>ONs:</b> LOC6O +5,3% · YM42O +6,0%</div>
+      <div class="portada-tag"><b>Div. cobrados:</b> ~USD 2,72</div>
+    </div>
+  </section>
+
+  <!-- STATUS -->
+  <section class="section" id="s-resumen">
+    <div class="page">
+      <div class="page-header">
+        <h2>Status · Mayo 2026</h2>
+        <p>Corte al 05/05/2026. Valuación en base al resumen de cuenta Balanz. P&L calculado contra precio promedio ponderado de compra según movimientos históricos. MEP $1.437,43.</p>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-tile">
+          <div class="st-label">Total cartera USD</div>
+          <div class="st-val">$5.285</div>
+          <div class="st-sub">sin BCAHA · todo en USD</div>
+        </div>
+        <div class="stat-tile gold">
+          <div class="st-label">Capital aportado</div>
+          <div class="st-val">$5.173</div>
+          <div class="st-sub">USD · costo histórico</div>
+        </div>
+        <div class="stat-tile green">
+          <div class="st-label">P&L neto USD</div>
+          <div class="st-val" style="color:var(--green-dk)">+$112</div>
+          <div class="st-sub">+2,2% · 161 días</div>
+        </div>
+        <div class="stat-tile cyan">
+          <div class="st-label">TNA cartera</div>
+          <div class="st-val" style="color:var(--green-dk)">+4,9%</div>
+          <div class="st-sub">anualizado en USD</div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="cl-item"><div class="cl">CEDEARs</div><div class="cv">$3.173</div><div class="cs">USD · 60%</div></div>
+        <div class="cl-sep"></div>
+        <div class="cl-item"><div class="cl">ONs Corp.</div><div class="cv">$1.893</div><div class="cs">USD · 35,8%</div></div>
+        <div class="cl-sep"></div>
+        <div class="cl-item"><div class="cl">Acciones ARG</div><div class="cv">$218</div><div class="cs">USD · 4,1%</div></div>
+        <div class="cl-sep"></div>
+        <div class="cl-item"><div class="cl">TNA cartera</div><div class="cv pos">+4,9%</div><div class="cs">anualizado USD</div></div>
+        <div class="cl-sep"></div>
+        <div class="cl-item"><div class="cl">Días tenencia</div><div class="cv">161</div><div class="cs">desde 25/11/2025</div></div>
+        <div class="cl-sep"></div>
+        <div class="cl-item"><div class="cl">P&L neto</div><div class="cv pos">+$112</div><div class="cs">+2,2%</div></div>
+      </div>
+
+      <!-- CHARTS -->
+      <div class="g2" style="align-items:start;margin-bottom:20px">
+        <div class="card" style="margin-bottom:0">
+          <div class="card-title">Distribución por tipo</div>
+          <div style="display:flex;align-items:center;gap:20px">
+            <div style="position:relative;width:160px;height:160px;flex-shrink:0"><canvas id="cTipo"></canvas></div>
+            <div id="cTipo-legend" style="display:flex;flex-direction:column;gap:8px;flex:1"></div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:0">
+          <div class="card-title">Top posiciones por valor</div>
+          <div style="position:relative;height:200px"><canvas id="cTop"></canvas></div>
+        </div>
+      </div>
+
+      <!-- ACCIONES -->
+      <div class="card">
+        <div class="card-title">Acciones Argentinas · USD 218</div>
+        <table class="tbl">
+          <thead><tr><th>Ticker</th><th>Empresa</th><th>Cant.</th><th>Costo USD</th><th>Valor USD</th><th>P&L USD</th><th>P&L %</th><th>Días</th><th>TNA</th><th style="text-align:center">Est.</th></tr></thead>
+          <tbody>
+            <tr><td><b>GGAL</b></td><td>Grupo Financiero Galicia</td><td>17</td><td>$99,71</td><td>$70,96</td><td style="color:var(--red-dk);font-weight:700">-$28,75</td><td><span class="pill-neg">-28,8%</span></td><td>126</td><td style="color:var(--red-dk)">-83,5%</td><td style="text-align:center"><span class="sem sem-r">▼</span></td></tr>
+            <tr><td><b>PAMP</b></td><td>Pampa Energía</td><td>33</td><td>$123,88</td><td>$109,74</td><td style="color:var(--red-dk);font-weight:700">-$14,14</td><td><span class="pill-neg">-11,4%</span></td><td>161</td><td style="color:var(--red-dk)">-25,9%</td><td style="text-align:center"><span class="sem sem-r">▼</span></td></tr>
+            <tr><td><b>TGSU2</b></td><td>TGS Clase B</td><td>6</td><td>$39,91</td><td>$37,30</td><td style="color:var(--red-dk);font-weight:700">-$2,62</td><td><span class="pill-neg">-6,6%</span></td><td>126</td><td style="color:var(--red-dk)">-19,0%</td><td style="text-align:center"><span class="sem sem-r">▼</span></td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="4"><b>Total Acciones</b></td><td><b>$218,00</b></td><td style="color:var(--red-dk)"><b>-$45,51</b></td><td><span class="pill-neg">-17,3%</span></td><td colspan="3"></td></tr></tfoot>
+        </table>
+      </div>
+
+      <!-- CEDEARs -->
+      <div class="card">
+        <div class="card-title">CEDEARs · USD 3.173</div>
+        <table class="tbl">
+          <thead><tr><th>Ticker</th><th>Empresa</th><th>Cant.</th><th>Costo USD</th><th>Valor USD</th><th>P&L USD</th><th>P&L %</th><th>Días</th><th>TNA</th><th style="text-align:center">Est.</th></tr></thead>
+          <tbody>
+            <tr><td><b>MELI</b></td><td>MercadoLibre</td><td>50</td><td>$803,22</td><td>$788,56</td><td style="color:var(--red-dk);font-weight:700">-$14,66</td><td><span class="pill-neg">-1,8%</span></td><td>138</td><td style="color:var(--red-dk)">-4,8%</td><td style="text-align:center"><span class="sem sem-r">▼</span></td></tr>
+            <tr><td><b>GOOGL</b></td><td>Alphabet (Google)</td><td>86</td><td>$486,37</td><td>$596,20</td><td style="color:var(--green-dk);font-weight:700">+$109,82</td><td><span class="pill-pos">+22,6%</span></td><td>161</td><td style="color:var(--green-dk)">+51,2%</td><td style="text-align:center"><span class="sem sem-g">▲</span></td></tr>
+            <tr><td><b>LLY</b></td><td>Eli Lilly</td><td>14</td><td>$286,92</td><td>$255,76</td><td style="color:var(--red-dk);font-weight:700">-$31,16</td><td><span class="pill-neg">-10,9%</span></td><td>138</td><td style="color:var(--red-dk)">-28,7%</td><td style="text-align:center"><span class="sem sem-r">▼</span></td></tr>
+            <tr><td><b>NU</b></td><td>Nu Holdings</td><td>32</td><td>$279,34</td><td>$239,54</td><td style="color:var(--red-dk);font-weight:700">-$39,80</td><td><span class="pill-neg">-14,2%</span></td><td>138</td><td style="color:var(--red-dk)">-37,7%</td><td style="text-align:center"><span class="sem sem-r">▼</span></td></tr>
+            <tr><td><b>AVGO</b></td><td>Broadcom Inc.</td><td>20</td><td>$209,70</td><td>$226,65</td><td style="color:var(--green-dk);font-weight:700">+$16,95</td><td><span class="pill-pos">+8,1%</span></td><td>154</td><td style="color:var(--green-dk)">+19,2%</td><td style="text-align:center"><span class="sem sem-g">▲</span></td></tr>
+            <tr><td><b>SLV</b></td><td>iShares Silver Trust</td><td>19</td><td>$204,12</td><td>$219,29</td><td style="color:var(--green-dk);font-weight:700">+$15,17</td><td><span class="pill-pos">+7,4%</span></td><td>154</td><td style="color:var(--green-dk)">+17,6%</td><td style="text-align:center"><span class="sem sem-g">▲</span></td></tr>
+            <tr><td><b>ITA</b></td><td>iShares Aero & Defense</td><td>25</td><td>$129,32</td><td>$111,74</td><td style="color:var(--red-dk);font-weight:700">-$17,57</td><td><span class="pill-neg">-13,6%</span></td><td>64</td><td style="color:var(--red-dk)">-77,5%</td><td style="text-align:center"><span class="sem sem-r">▼</span></td></tr>
+            <tr><td><b>AMD</b></td><td>Advanced Micro Devices</td><td>3</td><td>$71,89</td><td>$109,47</td><td style="color:var(--green-dk);font-weight:700">+$37,57</td><td><span class="pill-pos">+52,3%</span></td><td>105</td><td style="color:var(--green-dk)">+181,7%</td><td style="text-align:center"><span class="sem sem-g">▲</span></td></tr>
+            <tr><td><b>ADI</b></td><td>Analog Devices</td><td>4</td><td>$76,55</td><td>$110,59</td><td style="color:var(--green-dk);font-weight:700">+$34,04</td><td><span class="pill-pos">+44,5%</span></td><td>154</td><td style="color:var(--green-dk)">+105,4%</td><td style="text-align:center"><span class="sem sem-g">▲</span></td></tr>
+            <tr><td><b>B</b></td><td>Barrick Mining</td><td>5</td><td>$133,04</td><td>$101,22</td><td style="color:var(--red-dk);font-weight:700">-$31,82</td><td><span class="pill-neg">-23,9%</span></td><td>64</td><td style="color:var(--red-dk)">-136,4%</td><td style="text-align:center"><span class="sem sem-r">▼</span></td></tr>
+            <tr><td><b>NVDA</b></td><td>Nvidia Corp.</td><td>16</td><td>$132,43</td><td>$137,02</td><td style="color:var(--green-dk);font-weight:700">+$4,59</td><td><span class="pill-pos">+3,5%</span></td><td>161</td><td style="color:var(--green-dk)">+7,9%</td><td style="text-align:center"><span class="sem sem-g">▲</span></td></tr>
+            <tr><td><b>TSLA</b></td><td>Tesla Inc.</td><td>3</td><td>$95,02</td><td>$81,56</td><td style="color:var(--red-dk);font-weight:700">-$13,45</td><td><span class="pill-neg">-14,2%</span></td><td>161</td><td style="color:var(--red-dk)">-32,1%</td><td style="text-align:center"><span class="sem sem-r">▼</span></td></tr>
+            <tr><td><b>IBIT</b></td><td>iShares Bitcoin Trust</td><td>13</td><td>$71,47</td><td>$62,36</td><td style="color:var(--red-dk);font-weight:700">-$9,11</td><td><span class="pill-neg">-12,7%</span></td><td>154</td><td style="color:var(--red-dk)">-30,2%</td><td style="text-align:center"><span class="sem sem-r">▼</span></td></tr>
+            <tr><td><b>ASML</b></td><td>ASML Holding NV</td><td>6</td><td>$57,50</td><td>$61,32</td><td style="color:var(--green-dk);font-weight:700">+$3,82</td><td><span class="pill-pos">+6,6%</span></td><td>105</td><td style="color:var(--green-dk)">+23,1%</td><td style="text-align:center"><span class="sem sem-g">▲</span></td></tr>
+            <tr><td><b>RTX</b></td><td>Raytheon Technologies</td><td>2</td><td>$85,30</td><td>$72,07</td><td style="color:var(--red-dk);font-weight:700">-$13,23</td><td><span class="pill-neg">-15,5%</span></td><td>105</td><td style="color:var(--red-dk)">-53,9%</td><td style="text-align:center"><span class="sem sem-r">▼</span></td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="4"><b>Total CEDEARs</b></td><td><b>$3.173,35</b></td><td style="color:var(--green-dk)"><b>+$104,16</b></td><td><span class="pill-pos">+3,4%</span></td><td colspan="3"></td></tr></tfoot>
+        </table>
+      </div>
+
+      <!-- ONs -->
+      <div class="card">
+        <div class="card-title">Obligaciones Negociables · USD 1.893</div>
+        <table class="tbl">
+          <thead><tr><th>Ticker</th><th>Instrumento</th><th>VN</th><th>Costo USD</th><th>Valor USD</th><th>P&L USD</th><th>P&L %</th><th>Días</th><th>TNA</th><th style="text-align:center">Est.</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><b>LOC6O</b></td><td>ON Loma Negra CL.6 Ene/29</td><td>90</td>
+              <td>$90,36</td><td>$95,19</td>
+              <td style="color:var(--green-dk);font-weight:700">+$4,83</td>
+              <td><span class="pill-pos">+5,3%</span></td><td>105</td>
+              <td style="color:var(--green-dk)">+18,6%</td>
+              <td style="text-align:center"><span class="sem sem-g">▲</span></td>
+            </tr>
+            <tr>
+              <td><b>YM42O</b></td><td>ON YPF CL.42 Mar/29</td><td>1.690</td>
+              <td>$1.696,76</td><td>$1.798,25</td>
+              <td style="color:var(--green-dk);font-weight:700">+$101,49</td>
+              <td><span class="pill-pos">+6,0%</span></td><td>159</td>
+              <td style="color:var(--green-dk)">+13,7%</td>
+              <td style="text-align:center"><span class="sem sem-g">▲</span></td>
+            </tr>
+          </tbody>
+          <tfoot><tr><td colspan="4"><b>Total ONs</b></td><td><b>$1.893,44</b></td><td style="color:var(--green-dk)"><b>+$106,32</b></td><td><span class="pill-pos">+5,9%</span></td><td colspan="3"></td></tr></tfoot>
+        </table>
+        <div class="nota-box" style="margin-top:12px"><strong style="color:var(--navy)">Nota TNA ONs:</strong> La TNA anualizada de posición refleja la apreciación de capital en el mercado secundario, no el rendimiento al vencimiento (YTM). LOC6O rinde ~5,5% TNA y YM42O ~7% TNA al vencimiento.</div>
+      </div>
+
+      <!-- FONDO -->
+      <div class="card">
+        <div class="card-title">Fondo · USD 783</div>
+        <table class="tbl">
+          <thead><tr><th>Ticker</th><th>Instrumento</th><th>Cuotas</th><th>Precio</th><th>Valor USD</th><th style="text-align:center">Est.</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><b>BCAHA</b></td><td>Balanz Ahorro Corto Plazo Clase A</td>
+              <td>4.942,40</td><td>$227,75</td><td>$783,10</td>
+              <td style="text-align:center"><span class="sem sem-g">▲</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- DIVIDENDOS -->
+      <div class="card">
+        <div class="card-title">Dividendos Cobrados</div>
+        <table class="tbl">
+          <thead><tr><th>Ticker</th><th>Fecha</th><th>Moneda</th><th>Importe</th></tr></thead>
+          <tbody>
+            <tr><td><b>GGAL</b></td><td>Ene/Feb/Mar/Abr 2026</td><td>ARS</td><td>$1.691,53 (≈ USD 1,18)</td></tr>
+            <tr><td><b>AVGO</b></td><td>Ene + Abr 2026</td><td>USD</td><td>USD 0,42</td></tr>
+            <tr><td><b>GOOGL</b></td><td>Dic 2025 + Mar 2026</td><td>USD</td><td>USD 0,21</td></tr>
+            <tr><td><b>LLY</b></td><td>Mar 2026</td><td>USD</td><td>USD 0,27</td></tr>
+            <tr><td><b>ADI</b></td><td>Dic 2025 + Mar 2026</td><td>USD</td><td>USD 0,36</td></tr>
+            <tr><td><b>RTX</b></td><td>Mar 2026</td><td>USD</td><td>USD 0,17</td></tr>
+            <tr><td><b>ITA</b></td><td>Mar 2026</td><td>USD</td><td>USD 0,05</td></tr>
+            <tr><td><b>ASML</b></td><td>Feb 2026</td><td>USD</td><td>USD 0,06</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="3"><b>Total dividendos USD equiv.</b></td><td><b>~USD 2,72</b></td></tr></tfoot>
+        </table>
+        <div class="nota-box">
+          <strong style="color:var(--navy)">Nota:</strong> Los dividendos de GGAL se pagan en pesos. El resto en "Dólares C.V. 7000" = dólares reales acreditados en cuenta. Los importes negativos en pesos corresponden a retenciones de IIGG y BBPP.
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+<script>
+function checkPwd(){
+  const val=document.getElementById('pwd-input').value;
+  const err=document.getElementById('pwd-error');
+  if(val==='avcharian'){document.getElementById('pwd-screen').style.display='none';}
+  else{err.style.opacity='1';document.getElementById('pwd-input').value='';setTimeout(()=>err.style.opacity='0',2000);}
+}
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('collapsed');
+  document.getElementById('toggleBtn').classList.toggle('collapsed');
+  document.querySelector('.main').classList.toggle('expanded');
+}
+function toggleGroup(id){
+  const group=document.getElementById(id);
+  const header=group.previousElementSibling;
+  group.classList.toggle('open');
+  header.classList.toggle('open');
+}
+function show(id,el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item,.nav-sub-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(el)el.classList.add('active');
+  window.scrollTo(0,0);
+  setTimeout(buildCharts,60);
+}
+function renderLegend(cid,labels,colors,values){
+  const el=document.getElementById(cid);if(!el)return;
+  const total=values.reduce((a,b)=>a+b,0);
+  el.innerHTML=labels.map((l,i)=>{
+    const pct=((values[i]/total)*100).toFixed(1);
+    const bw=Math.round((values[i]/total)*100);
+    return`<div style="display:flex;align-items:center;gap:8px;font-size:11px">
+      <div style="width:10px;height:10px;border-radius:2px;background:${colors[i]};flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+          <span style="color:var(--navy);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px">${l}</span>
+          <span style="color:var(--gray);margin-left:4px;flex-shrink:0">${pct}%</span>
+        </div>
+        <div style="height:3px;background:var(--surface);border-radius:2px">
+          <div style="width:${bw}%;height:100%;background:${colors[i]};border-radius:2px"></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function buildCharts(){
+  ['cTipo','cTop'].forEach(id=>{const ex=Chart.getChart(id);if(ex)ex.destroy();});
+  const N='#0A1628',B='#1B4F8A',A='#2B7FE0',C='#38BDF8',G='#7C3AED';
+
+  const tL=['CEDEARs','ONs Corporativas','Fondo BCAHA','Acciones ARG'];
+  const tC=[N,A,C,B];
+  const tV=[3173,1893,783,218];
+  const eT=document.getElementById('cTipo');
+  if(eT){new Chart(eT,{type:'doughnut',data:{labels:tL,datasets:[{data:tV,backgroundColor:tC,borderWidth:0,hoverOffset:5}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{callbacks:{label:x=>` ${x.label}: $${x.parsed.toLocaleString('es-AR')}`}}}}});renderLegend('cTipo-legend',tL,tC,tV);}
+
+  const topLabels=['YM42O','MELI','GOOGL','LLY','AVGO','SLV','NU','NVDA','BCAHA'];
+  const topVals=[1798,789,596,256,227,219,240,137,783];
+  const topColors=['#2B7FE0','#0A1628','#1B4F8A','#7C3AED','#0E7490','#D97706','#475569','#166534','#38BDF8'];
+  const eTop=document.getElementById('cTop');
+  if(eTop)new Chart(eTop,{type:'bar',data:{labels:topLabels,datasets:[{data:topVals,backgroundColor:topColors,borderRadius:7,borderSkipped:false}]},options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:x=>' USD '+x.parsed.x.toLocaleString('es-AR')}}},scales:{x:{grid:{color:'#F1F5F9'},ticks:{color:'#64748B',callback:v=>'$'+Number(v).toLocaleString('es-AR')}},y:{grid:{display:false},ticks:{color:'#0A1628',font:{weight:'600'}}}}}});
+}
+window.addEventListener('load',()=>setTimeout(buildCharts,100));
+</script>
+</body>
+</html>
